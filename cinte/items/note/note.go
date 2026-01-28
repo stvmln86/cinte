@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/stvmln86/cinte/cinte/items/page"
 	"github.com/stvmln86/cinte/cinte/tools/neat"
 )
 
@@ -27,10 +28,14 @@ const (
 )
 
 // Create creates and returns a new Note in a database.
-func Create(db *sqlx.DB, name string) (*Note, error) {
+func Create(db *sqlx.DB, name, body string) (*Note, error) {
 	note := &Note{DB: db}
 	if err := db.Get(note, insert, name); err != nil {
 		return nil, fmt.Errorf("cannot create note - %w", err)
+	}
+
+	if _, err := page.Create(db, note.ID, body); err != nil {
+		return nil, fmt.Errorf("cannot create note - %w", errors.Unwrap(err))
 	}
 
 	return note, nil
@@ -58,6 +63,16 @@ func (n *Note) Delete() error {
 	}
 
 	return nil
+}
+
+// Latest returns the Note's latest Page from the database.
+func (n *Note) Latest() (*page.Page, error) {
+	page, err := page.GetLatest(n.DB, n.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get page - %w", errors.Unwrap(err))
+	}
+
+	return page, nil
 }
 
 // Rename renames the Note in the database.

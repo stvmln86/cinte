@@ -18,12 +18,17 @@ func TestCreate(t *testing.T) {
 	db := test.MockDB()
 
 	// success
-	note, err := Create(db, "name")
+	note, err := Create(db, "name", "Body.\n")
 	assert.NotNil(t, note.DB)
 	assert.Equal(t, int64(3), note.ID)
 	assert.Equal(t, time.Now().Unix(), note.Init)
 	assert.Equal(t, "name", note.Name)
 	assert.NoError(t, err)
+
+	// confirm - page created
+	var body string
+	db.Get(&body, "select body from Pages where note=3 order by id desc")
+	assert.Equal(t, "Body.\n", body)
 }
 
 func TestGet(t *testing.T) {
@@ -60,6 +65,20 @@ func TestDelete(t *testing.T) {
 	// confirm - pages deleted
 	note.DB.Get(&size, "select count(*) from Pages where note=1")
 	assert.Zero(t, size)
+}
+
+func TestLatest(t *testing.T) {
+	// setup
+	note := mockNote()
+
+	// success
+	page, err := note.Latest()
+	assert.NotNil(t, page.DB)
+	assert.Equal(t, int64(2), page.ID)
+	assert.Equal(t, int64(1767236400), page.Init)
+	assert.Equal(t, int64(1), page.Note)
+	assert.Equal(t, "Alpha new.\n", page.Body)
+	assert.NoError(t, err)
 }
 
 func TestRename(t *testing.T) {
