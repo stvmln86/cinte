@@ -12,7 +12,7 @@ func TestConnect(t *testing.T) {
 	assert.NotNil(t, db)
 	assert.NoError(t, err)
 
-	// confirm - database
+	// confirm - table created
 	var size int
 	err = db.Get(&size, "select count(*) from SQLITE_SCHEMA")
 	assert.Equal(t, 1, size)

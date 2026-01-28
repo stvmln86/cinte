@@ -24,7 +24,7 @@ const Schema = `
 		note integer not null,
 		body text    not null,
 
-		foreign key (note) references Notes(id)
+		foreign key (note) references Notes(id) on delete cascade
 	);
 
 	create index if not exists PageNotes on Pages(note);
