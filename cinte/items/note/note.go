@@ -3,6 +3,7 @@ package note
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -41,7 +42,7 @@ func Get(db *sqlx.DB, name string) (*Note, error) {
 	err := db.Get(note, selectName, name)
 
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return nil, nil
 	case err != nil:
 		return nil, fmt.Errorf("cannot get note %q - %w", name, err)
