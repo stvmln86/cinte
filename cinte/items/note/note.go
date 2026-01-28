@@ -30,7 +30,7 @@ const (
 func Create(db *sqlx.DB, name string) (*Note, error) {
 	note := &Note{DB: db}
 	if err := db.Get(note, insert, name); err != nil {
-		return nil, fmt.Errorf("cannot create note %q - %w", name, err)
+		return nil, fmt.Errorf("cannot create note - %w", err)
 	}
 
 	return note, nil
@@ -45,7 +45,7 @@ func Get(db *sqlx.DB, name string) (*Note, error) {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, nil
 	case err != nil:
-		return nil, fmt.Errorf("cannot get note %q - %w", name, err)
+		return nil, fmt.Errorf("cannot get note - %w", err)
 	default:
 		return note, nil
 	}
@@ -54,7 +54,7 @@ func Get(db *sqlx.DB, name string) (*Note, error) {
 // Delete deletes the Note from the database.
 func (n *Note) Delete() error {
 	if _, err := n.DB.Exec(delete, n.ID); err != nil {
-		return fmt.Errorf("cannot delete note %q - %w", n.Name, err)
+		return fmt.Errorf("cannot delete note - %w", err)
 	}
 
 	return nil
@@ -63,7 +63,7 @@ func (n *Note) Delete() error {
 // Rename renames the Note in the database.
 func (n *Note) Rename(name string) error {
 	if _, err := n.DB.Exec(updateName, name, n.ID); err != nil {
-		return fmt.Errorf("cannot rename note %q - %w", n.Name, err)
+		return fmt.Errorf("cannot rename note - %w", err)
 	}
 
 	n.Name = name
