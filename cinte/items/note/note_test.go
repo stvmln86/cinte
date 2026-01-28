@@ -30,12 +30,17 @@ func TestGet(t *testing.T) {
 	// setup
 	db := test.MockDB()
 
-	// success
+	// success - existing note
 	note, err := Get(db, "alpha")
 	assert.NotNil(t, note.DB)
 	assert.Equal(t, int64(1), note.ID)
 	assert.Equal(t, int64(1767232800), note.Init)
 	assert.Equal(t, "alpha", note.Name)
+	assert.NoError(t, err)
+
+	// success - nonexistent note
+	note, err = Get(db, "nope")
+	assert.Nil(t, note)
 	assert.NoError(t, err)
 }
 
