@@ -19,10 +19,12 @@ func TestCreate(t *testing.T) {
 
 	// success
 	note, err := Create(db, "name", "Body.\n")
-	assert.NotNil(t, note.DB)
-	assert.Equal(t, int64(3), note.ID)
-	assert.Equal(t, time.Now().Unix(), note.Init)
-	assert.Equal(t, "name", note.Name)
+	assert.EqualExportedValues(t, &Note{
+		DB:   db,
+		ID:   int64(3),
+		Init: time.Now().Unix(),
+		Name: "name",
+	}, note)
 	assert.NoError(t, err)
 
 	// confirm - page created
@@ -37,10 +39,12 @@ func TestGet(t *testing.T) {
 
 	// success - existing note
 	note, err := Get(db, "alpha")
-	assert.NotNil(t, note.DB)
-	assert.Equal(t, int64(1), note.ID)
-	assert.Equal(t, int64(1767232800), note.Init)
-	assert.Equal(t, "alpha", note.Name)
+	assert.EqualExportedValues(t, &Note{
+		DB:   db,
+		ID:   int64(1),
+		Init: int64(1767232800),
+		Name: "alpha",
+	}, note)
 	assert.NoError(t, err)
 
 	// success - nonexistent note
@@ -58,7 +62,7 @@ func TestDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// confirm - note deleted
-	var size bool
+	var size int
 	note.DB.Get(&size, "select count(*) from Notes where id=1")
 	assert.Zero(t, size)
 
@@ -73,10 +77,6 @@ func TestLatest(t *testing.T) {
 
 	// success
 	page, err := note.Latest()
-	assert.NotNil(t, page.DB)
-	assert.Equal(t, int64(2), page.ID)
-	assert.Equal(t, int64(1767236400), page.Init)
-	assert.Equal(t, int64(1), page.Note)
 	assert.Equal(t, "Alpha new.\n", page.Body)
 	assert.NoError(t, err)
 }

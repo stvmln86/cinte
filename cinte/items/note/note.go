@@ -21,30 +21,43 @@ type Note struct {
 }
 
 const (
-	delete     = "delete from Notes where id=?"
-	insert     = "insert into Notes (name) values (?) returning *"
-	selectName = "select * from Notes where name=? limit 1"
-	updateName = "update Notes set name=? where id=?"
+	noteDelete     = "delete from Notes where id=?"
+	noteInsert     = "insert into Notes (name) values (?) returning *"
+	noteRename     = "update Notes set name=? where id=?"
+	noteSelectName = "select * from Notes where name=? limit 1"
+	noteUpdate     = "insert into Pages (note, body) values (?, ?) returning *"
 )
 
 // Create creates and returns a new Note in a database.
 func Create(db *sqlx.DB, name, body string) (*Note, error) {
-	note := &Note{DB: db}
-	if err := db.Get(note, insert, name); err != nil {
+	tx, err := db.Beginx()
+	if err != nil {
 		return nil, fmt.Errorf("cannot create note - %w", err)
 	}
 
-	if _, err := page.Create(db, note.ID, body); err != nil {
-		return nil, fmt.Errorf("cannot create note - %w", errors.Unwrap(err))
+	note := &Note{DB: db}
+	if err := tx.Get(note, noteInsert, name); err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("cannot create note - %w", err)
+	}
+
+	page := &page.Page{DB: db}
+	if err := tx.Get(page, noteUpdate, note.ID, body); err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("cannot create note - %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("cannot create note - %w", err)
 	}
 
 	return note, nil
 }
 
-// Get returns an existing Note from a database.
+// Get returns an existing Note from a database, or nil.
 func Get(db *sqlx.DB, name string) (*Note, error) {
 	note := &Note{DB: db}
-	err := db.Get(note, selectName, name)
+	err := db.Get(note, noteSelectName, name)
 
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -58,7 +71,7 @@ func Get(db *sqlx.DB, name string) (*Note, error) {
 
 // Delete deletes the Note from the database.
 func (n *Note) Delete() error {
-	if _, err := n.DB.Exec(delete, n.ID); err != nil {
+	if _, err := n.DB.Exec(noteDelete, n.ID); err != nil {
 		return fmt.Errorf("cannot delete note - %w", err)
 	}
 
@@ -67,17 +80,13 @@ func (n *Note) Delete() error {
 
 // Latest returns the Note's latest Page from the database.
 func (n *Note) Latest() (*page.Page, error) {
-	page, err := page.GetLatest(n.DB, n.ID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get page - %w", errors.Unwrap(err))
-	}
-
-	return page, nil
+	return page.GetLatest(n.DB, n.ID)
 }
 
 // Rename renames the Note in the database.
+// Returns an error if name is empty after sanitization.
 func (n *Note) Rename(name string) error {
-	if _, err := n.DB.Exec(updateName, name, n.ID); err != nil {
+	if _, err := n.DB.Exec(noteRename, name, n.ID); err != nil {
 		return fmt.Errorf("cannot rename note - %w", err)
 	}
 
