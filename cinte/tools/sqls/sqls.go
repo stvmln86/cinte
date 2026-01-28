@@ -1,10 +1,11 @@
 // Package sqls implements SQLite schema and queries.
 package sqls
 
-// Pragma is the default always-on database pragma.
+// Pragma is the per-connection database pragma.
 const Pragma = `
-	pragma encoding = 'utf-8';
-	pragma foreign_keys = on;
+	pragma busy_timeout = 5000;
+	pragma foreign_keys = true;
+	pragma synchronous  = normal;
 `
 
 // Schema is the default first-run database schema.
@@ -26,6 +27,5 @@ const Schema = `
 		foreign key (note) references Notes(id)
 	);
 
-	create index if not exists NoteNames on Notes(name);
 	create index if not exists PageNotes on Pages(note);
 `
