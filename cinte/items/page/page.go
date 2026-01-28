@@ -21,26 +21,26 @@ type Page struct {
 }
 
 const (
-	delete       = "delete from Pages where id=?"
-	insert       = "insert into Pages (note, body) values (?, ?) returning *"
-	selectLatest = "select * from Pages where note=? order by id desc limit 1"
-	selectID     = "select * from Pages where id=? limit 1"
+	pageDelete       = "delete from Pages where id=?"
+	pageInsert       = "insert into Pages (note, body) values (?, ?) returning *"
+	pageSelectID     = "select * from Pages where id=? limit 1"
+	pageSelectLatest = "select * from Pages where note=? order by id desc limit 1"
 )
 
 // Create creates and returns a new Page in a database.
 func Create(db *sqlx.DB, note int64, body string) (*Page, error) {
 	page := &Page{DB: db}
-	if err := db.Get(page, insert, note, body); err != nil {
+	if err := db.Get(page, pageInsert, note, body); err != nil {
 		return nil, fmt.Errorf("cannot create page - %w", err)
 	}
 
 	return page, nil
 }
 
-// Get returns an existing Page from a database.
+// Get returns an existing Page from a database, or nil.
 func Get(db *sqlx.DB, id int64) (*Page, error) {
 	page := &Page{DB: db}
-	err := db.Get(page, selectID, id)
+	err := db.Get(page, pageSelectID, id)
 
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -52,10 +52,10 @@ func Get(db *sqlx.DB, id int64) (*Page, error) {
 	}
 }
 
-// GetLatest returns a Note's latest Page from a database.
+// GetLatest returns a Note's latest Page from a database, or nil.
 func GetLatest(db *sqlx.DB, note int64) (*Page, error) {
 	page := &Page{DB: db}
-	err := db.Get(page, selectLatest, note)
+	err := db.Get(page, pageSelectLatest, note)
 
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -69,7 +69,7 @@ func GetLatest(db *sqlx.DB, note int64) (*Page, error) {
 
 // Delete deletes the Page from the database.
 func (p *Page) Delete() error {
-	if _, err := p.DB.Exec(delete, p.ID); err != nil {
+	if _, err := p.DB.Exec(pageDelete, p.ID); err != nil {
 		return fmt.Errorf("cannot delete page - %w", err)
 	}
 

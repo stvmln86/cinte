@@ -19,12 +19,19 @@ func TestCreate(t *testing.T) {
 
 	// success
 	page, err := Create(db, 1, "Body.\n")
-	assert.NotNil(t, page.DB)
-	assert.Equal(t, int64(4), page.ID)
-	assert.Equal(t, time.Now().Unix(), page.Init)
-	assert.Equal(t, int64(1), page.Note)
-	assert.Equal(t, "Body.\n", page.Body)
+	assert.EqualExportedValues(t, &Page{
+		DB:   db,
+		ID:   int64(4),
+		Init: time.Now().Unix(),
+		Note: int64(1),
+		Body: "Body.\n",
+	}, page)
 	assert.NoError(t, err)
+
+	// confirm - page created
+	var body string
+	db.Get(&body, "select body from Pages where id=4")
+	assert.Equal(t, "Body.\n", body)
 }
 
 func TestGet(t *testing.T) {
@@ -33,11 +40,13 @@ func TestGet(t *testing.T) {
 
 	// success - existing page
 	page, err := Get(db, 1)
-	assert.NotNil(t, page.DB)
-	assert.Equal(t, int64(1), page.ID)
-	assert.Equal(t, int64(1767232800), page.Init)
-	assert.Equal(t, int64(1), page.Note)
-	assert.Equal(t, "Alpha old.\n", page.Body)
+	assert.EqualExportedValues(t, &Page{
+		DB:   db,
+		ID:   int64(1),
+		Init: int64(1767232800),
+		Note: int64(1),
+		Body: "Alpha old.\n",
+	}, page)
 	assert.NoError(t, err)
 
 	// success - nonexistent page
@@ -50,17 +59,19 @@ func TestGetLatest(t *testing.T) {
 	// setup
 	db := test.MockDB()
 
-	// success - existing note
+	// success - existing page
 	page, err := GetLatest(db, 1)
-	assert.NotNil(t, page.DB)
-	assert.Equal(t, int64(2), page.ID)
-	assert.Equal(t, int64(1767236400), page.Init)
-	assert.Equal(t, int64(1), page.Note)
-	assert.Equal(t, "Alpha new.\n", page.Body)
+	assert.EqualExportedValues(t, &Page{
+		DB:   db,
+		ID:   int64(2),
+		Init: int64(1767236400),
+		Note: int64(1),
+		Body: "Alpha new.\n",
+	}, page)
 	assert.NoError(t, err)
 
-	// success - nonexistent note
-	page, err = GetLatest(db, 999)
+	// success - nonexistent page
+	page, err = GetLatest(db, -1)
 	assert.Nil(t, page)
 	assert.NoError(t, err)
 }
